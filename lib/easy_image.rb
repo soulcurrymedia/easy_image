@@ -18,7 +18,7 @@ class EasyImage
   # @return [EasyImage]
   def initialize(path, mime_type=nil)
     if not mime_type
-      mime_type = MimeInspector.determine path
+      mime_type = FastImage.type path
     end
 
     @mime_type = mime_type
@@ -74,9 +74,9 @@ class EasyImage
   def save(path, quality=nil)
     # Fix the output path to have the correct extension
     case @mime_type
-      when 'image/png' then ext = 'png'
-      when 'image/gif' then ext = 'gif'
-      else ext = 'jpg'
+    when ':png' then ext = 'png'
+    when ':gif' then ext = 'gif'
+    when ':jpeg' then ext = 'jpg'
     end
     path = path.sub(/\.\w+$/, '') + ".#{ext}"
 
