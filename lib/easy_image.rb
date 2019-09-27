@@ -73,11 +73,12 @@ class EasyImage
   # @return [String] the filesystem path to the saved version - this may be different than the path parameter because for format conversion
   def save(path, quality=nil)
     # Fix the output path to have the correct extension
-    case @mime_type
-    when ':png' then ext = 'png'
-    when ':gif' then ext = 'gif'
-    when ':jpeg' then ext = 'jpg'
-    end
+    ext = case @mime_type
+          when ':png' then 'png'
+          when ':gif' then 'gif'
+          when ':jpeg' then 'jpg'
+          when ':jpg' then 'jpg'
+          end
     path = path.sub(/\.\w+$/, '') + ".#{ext}"
 
     # Optimize for situations where the file does not need to be processed at all
@@ -98,12 +99,11 @@ class EasyImage
       @operations.each do |args|
         processor.send *args
       end
-
       return processor.save path, ext, quality
 
     # Vips had an issue with at least one PNG, so if there is an error
     # processing a file, fall back to ImageMagick
-    rescue VIPS::Error
+    rescue Vips::Error
       processor = MiniMagick.new @path
       retry
     end

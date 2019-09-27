@@ -1,4 +1,4 @@
-require 'Vips'
+require 'vips'
 
 # This class is almost a direct copy of Vips.rb from carrierwave-Vips
 class EasyImage
@@ -6,7 +6,7 @@ class EasyImage
 
     def initialize(path)
       @path = path
-      @image = ::Vips::Image.new path
+      @image = ::Vips::Image.new_from_file path
     end
 
     ##
@@ -20,12 +20,12 @@ class EasyImage
     def resize_to_fill(width, height)
       resize_image width, height, :max
 
-      if @image.x_size > width
+      if @image.width > width
         top = 0
-        left = (@image.x_size - width) / 2
-      elsif @image.y_size > height
+        left = (@image.width - width) / 2
+      elsif @image.height > height
         left = 0
-        top = (@image.y_size - height) / 2
+        top = (@image.height - height) / 2
       else
         left = 0
         top = 0
@@ -37,7 +37,7 @@ class EasyImage
     ##
     # See EasyImage::resize_to_limit
     def resize_to_limit(width, height)
-      if width < @image.x_size || height < @image.y_size
+      if width < @image.width || height < @image.height
         resize_image width, height
       end
     end
@@ -53,16 +53,9 @@ class EasyImage
 
       output_path = path.sub(/\.\w+$/, '') + ".#{format}"
 
-      if format == 'jpg'
-        writer = ::Vips::JPEGWriter.new @image, :quality => (quality || 80)
-      else
-        writer = ::Vips::PNGWriter.new @image
-      end
-
-      writer.write output_path
-
+      @image.write_to_file output_path, Q: (quality || 80)
       # Reset the image so we can use it again
-      @image = ::Vips::Image.new @path
+      @image = ::Vips::Image.new_from_file @path
 
       output_path
     end
@@ -76,37 +69,28 @@ class EasyImage
       if jpeg? # find the shrink ratio for loading
         shrink_factor = [8, 4, 2, 1].find {|sf| 1.0 / ratio >= sf }
         shrink_factor = 1 if shrink_factor == nil
-        @image = ::Vips::Image.jpeg @path,
-            :shrink_factor => shrink_factor, :sequential => true
+        @image = ::Vips::Image.jpegload(@path).shrink(shrink_factor, shrink_factor)
         ratio = get_ratio width, height, min_or_max
       elsif png?
-        @image = ::Vips::Image.png @path, :sequential => true
+        @image = ::Vips::Image.pngload(@path)
       end
 
       if ratio > 1
-        @image = @image.affinei_resize :nearest, ratio
+        @image = @image.resize ratio
       else
         if ratio <= 0.5
           factor = (1.0 / ratio).floor
           @image = @image.shrink(factor)
-          @image = @image.tile_cache(@image.x_size, 1, 30)
+          @image = @image.tilecache(@image.width, 1, 30)
           ratio = get_ratio width, height, min_or_max
         end
-        @image = @image.affinei_resize :bicubic, ratio
-        #@image = @image.conv begin
-        #  conv_mask = [
-        #    [ -1, -1, -1 ],
-        #    [ -1, 24, -1 ],
-        #    [ -1, -1, -1 ]
-        #  ]
-        #  ::Vips::Mask.new conv_mask, 16
-        #end
+        @image = @image.resize ratio
       end
     end
 
     def get_ratio(width, height, min_or_max=:min)
-      width_ratio = width.to_f / @image.x_size
-      height_ratio = height.to_f / @image.y_size
+      width_ratio = width.to_f / @image.width
+      height_ratio = height.to_f / @image.height
       [width_ratio, height_ratio].send(min_or_max)
     end
 
