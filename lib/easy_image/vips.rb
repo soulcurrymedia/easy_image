@@ -1,12 +1,12 @@
-require 'vips'
+require 'Vips'
 
-# This class is almost a direct copy of vips.rb from carrierwave-vips
+# This class is almost a direct copy of Vips.rb from carrierwave-Vips
 class EasyImage
   class Vips
 
     def initialize(path)
       @path = path
-      @image = ::VIPS::Image.new path
+      @image = ::Vips::Image.new path
     end
 
     ##
@@ -54,15 +54,15 @@ class EasyImage
       output_path = path.sub(/\.\w+$/, '') + ".#{format}"
 
       if format == 'jpg'
-        writer = ::VIPS::JPEGWriter.new @image, :quality => (quality || 80)
+        writer = ::Vips::JPEGWriter.new @image, :quality => (quality || 80)
       else
-        writer = ::VIPS::PNGWriter.new @image
+        writer = ::Vips::PNGWriter.new @image
       end
 
       writer.write output_path
 
       # Reset the image so we can use it again
-      @image = ::VIPS::Image.new @path
+      @image = ::Vips::Image.new @path
 
       output_path
     end
@@ -76,11 +76,11 @@ class EasyImage
       if jpeg? # find the shrink ratio for loading
         shrink_factor = [8, 4, 2, 1].find {|sf| 1.0 / ratio >= sf }
         shrink_factor = 1 if shrink_factor == nil
-        @image = ::VIPS::Image.jpeg @path,
+        @image = ::Vips::Image.jpeg @path,
             :shrink_factor => shrink_factor, :sequential => true
         ratio = get_ratio width, height, min_or_max
       elsif png?
-        @image = ::VIPS::Image.png @path, :sequential => true
+        @image = ::Vips::Image.png @path, :sequential => true
       end
 
       if ratio > 1
@@ -99,7 +99,7 @@ class EasyImage
         #    [ -1, 24, -1 ],
         #    [ -1, -1, -1 ]
         #  ]
-        #  ::VIPS::Mask.new conv_mask, 16
+        #  ::Vips::Mask.new conv_mask, 16
         #end
       end
     end
